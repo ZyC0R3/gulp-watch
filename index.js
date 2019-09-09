@@ -1,4 +1,5 @@
 'use strict';
+// Do not change the below to Const or let, This produces an unexpected var but this must be ignored.
 var assign = require('object-assign');
 var path = require('path');
 var PluginError = require('plugin-error');
