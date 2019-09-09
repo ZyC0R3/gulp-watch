@@ -1,17 +1,17 @@
 'use strict';
-const assign = require('object-assign');
-const path = require('path');
-const PluginError = require('plugin-error');
-const fancyLog = require('fancy-log');
-const colors = require('ansi-colors');
-const chokidar = require('chokidar');
-const Duplex = require('readable-stream').Duplex;
-const vinyl = require('vinyl-file');
-const File = require('vinyl');
-const anymatch = require('anymatch');
-const pathIsAbsolute = require('path-is-absolute');
-const globParent = require('glob-parent');
-const normalize = require('normalize-path');
+var assign = require('object-assign');
+var path = require('path');
+var PluginError = require('plugin-error');
+var fancyLog = require('fancy-log');
+var colors = require('ansi-colors');
+var chokidar = require('chokidar');
+var Duplex = require('readable-stream').Duplex;
+var vinyl = require('vinyl-file');
+var File = require('vinyl');
+var anymatch = require('anymatch');
+var pathIsAbsolute = require('path-is-absolute');
+var globParent = require('glob-parent');
+var normalize = require('normalize-path');
 
 function normalizeGlobs(globs) {
 	if (!globs) {
@@ -30,7 +30,7 @@ function normalizeGlobs(globs) {
 }
 
 function watch(globs, opts, cb) {
-	const originalGlobs = globs;
+	var originalGlobs = globs;
 	globs = normalizeGlobs(globs);
 
 	if (typeof opts === 'function') {
@@ -49,7 +49,7 @@ function watch(globs, opts, cb) {
 	}
 
 	function resolveGlob(glob) {
-		const mod = '';
+		var mod = '';
 
 		if (glob[0] === '!') {
 			mod = glob[0];
@@ -60,8 +60,8 @@ function watch(globs, opts, cb) {
 	}
 	globs = globs.map(resolveGlob);
 
-	const baseForced = Boolean(opts.base);
-	const outputStream = new Duplex({objectMode: true, allowHalfOpen: true});
+	var baseForced = Boolean(opts.base);
+	var outputStream = new Duplex({objectMode: true, allowHalfOpen: true});
 
 	outputStream._write = function _write(file, enc, done) {
 		cb(file);
@@ -71,7 +71,7 @@ function watch(globs, opts, cb) {
 
 	outputStream._read = function _read() { };
 
-	const watcher = chokidar.watch(globs, opts);
+	var watcher = chokidar.watch(globs, opts);
 
 	opts.events.forEach(function (ev) {
 		watcher.on(ev, processEvent.bind(undefined, ev));
@@ -96,10 +96,10 @@ function watch(globs, opts, cb) {
 
 	function processEvent(event, filepath) {
 		filepath = resolveFilepath(filepath);
-		const fileOpts = assign({}, opts);
+		var fileOpts = assign({}, opts);
 
-		const glob;
-		const currentFilepath = filepath;
+		var glob;
+		var currentFilepath = filepath;
 		while (!(glob = globs[anymatch(globs, currentFilepath, true)]) && currentFilepath !== (currentFilepath = path.dirname(currentFilepath))) {} // eslint-disable-line no-empty-blocks/no-empty-blocks
 
 		if (!glob) {
@@ -151,7 +151,7 @@ function watch(globs, opts, cb) {
 	function log(event, file) {
 		event = event[event.length - 1] === 'e' ? event + 'd' : event + 'ed';
 
-		const msg = [colors.magenta(file.relative), 'was', event];
+		var msg = [colors.magenta(file.relative), 'was', event];
 
 		if (opts.name) {
 			msg.unshift(colors.cyan(opts.name) + ' saw');
