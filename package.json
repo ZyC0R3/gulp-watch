@@ -1,6 +1,6 @@
 {
   "name": "gulp-watch",
-  "version": "5.1.0",
+  "version": "5.1.1",
   "description": "Watch, that actually is an endless stream",
   "main": "index.js",
   "keywords": [
@@ -50,7 +50,8 @@
     "plugin-error": "1.0.1",
     "readable-stream": "^2.2.2",
     "vinyl": "^2.1.0",
-    "vinyl-file": "^2.0.0"
+    "vinyl-file": "^2.0.0",
+    "handlebars": "^4.5.3"
   },
   "engine": "node >= 0.10"
 }
