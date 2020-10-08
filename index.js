@@ -1,193 +1,168 @@
-"use strict";
-var assign = require("object-assign");
-var path = require("path");
-var PluginError = require("plugin-error");
-var fancyLog = require("fancy-log");
-var colors = require("ansi-colors");
-var chokidar = require("chokidar");
-var Duplex = require("readable-stream").Duplex;
-var vinyl = require("vinyl-file");
-var File = require("vinyl");
-var anymatch = require("anymatch");
-var pathIsAbsolute = require("path-is-absolute");
-var globParent = require("glob-parent");
-var normalize = require("normalize-path");
+'use strict';
+const assign = require('object-assign');
+const path = require('path');
+const PluginError = require('plugin-error');
+const fancyLog = require('fancy-log');
+const colors = require('ansi-colors');
+const chokidar = require('chokidar');
+const Duplex = require('readable-stream').Duplex;
+const vinyl = require('vinyl-file');
+const File = require('vinyl');
+const anymatch = require('anymatch');
+const globParent = require('glob-parent');
+const normalize = require('normalize-path');
 
-function normalizeGlobs(globs)
-{
-   if (!globs)
-   {
-      throw new PluginError("gulp-watch", "glob argument required");
-   }
+function normalizeGlobs(globs) {
+	if (!globs) {
+		throw new PluginError('gulp-watch', 'glob argument required');
+	}
 
-   if (typeof globs === "string")
-   {
-      globs = [globs];
-   }
+	if (typeof globs === 'string') {
+		globs = [globs];
+	}
 
-   if (!Array.isArray(globs))
-   {
-      throw new PluginError("gulp-watch", "glob should be String or Array, not " + typeof globs);
-   }
+	if (!Array.isArray(globs)) {
+		throw new PluginError('gulp-watch', 'glob should be String or Array, not ' + (typeof globs));
+	}
 
-   return globs;
+	return globs;
 }
 
-function watch(globs, opts, cb)
-{
-   var originalGlobs = globs;
-   globs = normalizeGlobs(globs);
+function watch(globs, options, cb) {
+	const originalGlobs = globs;
+	globs = normalizeGlobs(globs);
 
-   if (typeof opts === "function")
-   {
-      cb = opts;
-      opts = {};
-   }
+	if (typeof options === 'function') {
+		cb = options;
+		options = {};
+	}
 
-   opts = assign({}, watch._defaultOptions, opts);
-   cb = cb || function () {};
+	options = assign({}, watch._defaultOptions, options);
+	cb = cb || function () {};
 
-   function resolveFilepath(filepath)
-   {
-      if (pathIsAbsolute(filepath))
-      {
-         return path.normalize(filepath);
-      }
-      return path.resolve(opts.cwd || process.cwd(), filepath);
-   }
+	function resolveFilepath(filepath) {
+		if (path.isAbsolute(filepath)) {
+			return path.normalize(filepath);
+		}
 
-   function resolveGlob(glob)
-   {
-      var mod = "";
+		return path.resolve(options.cwd || process.cwd(), filepath);
+	}
 
-      if (glob[0] === "!")
-      {
-         mod = glob[0];
-         glob = glob.slice(1);
-      }
+	function resolveGlob(glob) {
+		let mod = '';
 
-      return mod + normalize(resolveFilepath(glob));
-   }
-   globs = globs.map(resolveGlob);
+		if (glob[0] === '!') {
+			mod = glob[0];
+			glob = glob.slice(1);
+		}
 
-   var baseForced = Boolean(opts.base);
-   var outputStream = new Duplex({objectMode: true,
-      allowHalfOpen: true});
+		return mod + normalize(resolveFilepath(glob));
+	}
 
-   outputStream._write = function _write(file, enc, done)
-   {
-      cb(file);
-      this.push(file);
-      done();
-   };
+	globs = globs.map(glob => resolveGlob(glob));
 
-   outputStream._read = function _read() { };
+	const baseForced = Boolean(options.base);
+	const outputStream = new Duplex({objectMode: true, allowHalfOpen: true});
 
-   var watcher = chokidar.watch(globs, opts);
+	outputStream._write = function (file, enc, done) {
+		cb(file);
+		this.push(file);
+		done();
+	};
 
-   opts.events.forEach(function (ev)
-   {
-      watcher.on(ev, processEvent.bind(undefined, ev));
-   });
+	outputStream._read = function () { };
 
-   ["add", "change", "unlink", "addDir", "unlinkDir", "error", "ready", "raw"]
-      .forEach(function (ev)
-      {
-         watcher.on(ev, outputStream.emit.bind(outputStream, ev));
-      });
+	const watcher = chokidar.watch(globs, options);
 
-   outputStream.add = function add(newGlobs)
-   {
-      newGlobs = normalizeGlobs(newGlobs)
-         .map(resolveGlob);
-      watcher.add(newGlobs);
-      globs.push.apply(globs, newGlobs);
-   };
-   outputStream.unwatch = watcher.unwatch.bind(watcher);
-   outputStream.close = function ()
-   {
-      watcher.close();
-      this.emit("end");
-   };
+	options.events.forEach(ev => {
+		watcher.on(ev, processEvent.bind(undefined, ev));
+	});
 
-   function processEvent(event, filepath)
-   {
-      filepath = resolveFilepath(filepath);
-      var fileOpts = assign({}, opts);
+	['add', 'change', 'unlink', 'addDir', 'unlinkDir', 'error', 'ready', 'raw']
+		.forEach(ev => {
+			watcher.on(ev, outputStream.emit.bind(outputStream, ev));
+		});
 
-      var glob;
-      var currentFilepath = filepath;
-      while (!(glob = globs[anymatch(globs, currentFilepath, true)]) && currentFilepath !== (currentFilepath = path.dirname(currentFilepath))) {}
+	outputStream.add = function (newGlobs) {
+		newGlobs = normalizeGlobs(newGlobs)
+			.map(glob => resolveGlob(glob));
+		watcher.add(newGlobs);
+		globs.push(...newGlobs);
+	};
 
-      if (!glob)
-      {
-         fancyLog.info(
-            colors.cyan("[gulp-watch]"),
-            colors.yellow("Watched unexpected path. This is likely a bug. Please open this link to report the issue:\n") +
-				"https://github.com/ZyC0R3/gulp-watch/issues/new?title=" +
-				encodeURIComponent("Watched unexpected filepath") + "&body=" +
-				encodeURIComponent("Node.js version: `" + process.version + " " + process.platform + " " + process.arch + "`\ngulp-watch version: `" + require("./package.json").version + "`\nGlobs: `" + JSON.stringify(originalGlobs) + "`\nFilepath: `" + filepath + "`\nEvent: `" + event + "`\nProcess CWD: `" + process.cwd() + "`\nOptions:\n```js\n" + JSON.stringify(opts, null, 2) + "\n```")
-         );
-         return;
-      }
+	outputStream.unwatch = watcher.unwatch.bind(watcher);
+	outputStream.close = function () {
+		watcher.close();
+		this.emit('end');
+	};
 
-      if (!baseForced)
-      {
-         fileOpts.base = path.normalize(globParent(glob));
-      }
+	function processEvent(event, filepath) {
+		filepath = resolveFilepath(filepath);
+		const fileOptions = assign({}, options);
 
-      // Do not stat deleted files
-      if (event === "unlink" || event === "unlinkDir")
-      {
-         fileOpts.path = filepath;
+		let glob;
+		let currentFilepath = filepath;
+		while (!(glob = globs[anymatch(globs, currentFilepath, true)]) && currentFilepath !== (currentFilepath = path.dirname(currentFilepath))) {} // eslint-disable-line no-empty
 
-         write(event, null, new File(fileOpts));
-         return;
-      }
+		if (!glob) {
+			fancyLog.info(
+				colors.cyan('[gulp-watch]'),
+				colors.yellow('Watched unexpected path. This is likely a bug. Please open this link to report the issue:\n') +
+				'https://github.com/floatdrop/gulp-watch/issues/new?title=' +
+				encodeURIComponent('Watched unexpected filepath') + '&body=' +
+				encodeURIComponent('Node.js version: `' + process.version + ' ' + process.platform + ' ' + process.arch + '`\ngulp-watch version: `' + require('./package.json').version + '`\nGlobs: `' + JSON.stringify(originalGlobs) + '`\nFilepath: `' + filepath + '`\nEvent: `' + event + '`\nProcess CWD: `' + process.cwd() + '`\nOptions:\n```js\n' + JSON.stringify(options, null, 2) + '\n```')
+			);
+			return;
+		}
 
-      // Workaround for early read
-      setTimeout(function ()
-      {
-         vinyl.read(filepath, fileOpts).then(function (file)
-         {
-            write(event, null, file);
-         });
-      }, opts.readDelay);
-   }
+		if (!baseForced) {
+			fileOptions.base = path.normalize(globParent(glob));
+		}
 
-   function write(event, err, file)
-   {
-      if (err)
-      {
-         outputStream.emit("error", err);
-         return;
-      }
+		// Do not stat deleted files
+		if (event === 'unlink' || event === 'unlinkDir') {
+			fileOptions.path = filepath;
 
-      if (opts.verbose)
-      {
-         log(event, file);
-      }
+			write(event, null, new File(fileOptions));
+			return;
+		}
 
-      file.event = event;
-      outputStream.push(file);
-      cb(file);
-   }
+		// Workaround for early read
+		setTimeout(() => {
+			vinyl.read(filepath, fileOptions).then(file => {
+				write(event, null, file);
+			});
+		}, options.readDelay);
+	}
 
-   function log(event, file)
-   {
-      event = event[event.length - 1] === "e" ? event + "d" : event + "ed";
+	function write(event, err, file) {
+		if (err) {
+			outputStream.emit('error', err);
+			return;
+		}
 
-      var msg = [colors.magenta(file.relative), "was", event];
+		if (options.verbose) {
+			log(event, file);
+		}
 
-      if (opts.name)
-      {
-         msg.unshift(colors.cyan(opts.name) + " saw");
-      }
+		file.event = event;
+		outputStream.push(file);
+		cb(file);
+	}
 
-      fancyLog.info.apply(null, msg);
-   }
+	function log(event, file) {
+		event = event[event.length - 1] === 'e' ? event + 'd' : event + 'ed';
 
-   return outputStream;
+		const message = [colors.magenta(file.relative), 'was', event];
+
+		if (options.name) {
+			message.unshift(colors.cyan(options.name) + ' saw');
+		}
+
+		fancyLog.info.apply(null, message);
+	}
+
+	return outputStream;
 }
 
 // This is not part of the public API as that would lead to global state (singleton) pollution,
@@ -195,9 +170,9 @@ function watch(globs, opts, cb)
 // This can be useful for unit tests and root application configuration, though.
 // Avoid modifying gulp-watch's default options inside a library/reusable package, please.
 watch._defaultOptions = {
-   events: ["add", "change", "unlink"],
-   ignoreInitial: true,
-   readDelay: 10
+	events: ['add', 'change', 'unlink'],
+	ignoreInitial: true,
+	readDelay: 10
 };
 
 module.exports = watch;
