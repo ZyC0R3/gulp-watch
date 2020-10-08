@@ -1,8 +1,9 @@
 sudo: false
 language: node_js
+os:
+  - linux
+  - windows
 node_js:
-  - '9'
   - '10'
-  - '11'
   - '12'
   - '14'
