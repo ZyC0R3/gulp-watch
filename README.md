@@ -1,3 +1,5 @@
+# [gulp](https://github.com/gulpjs/gulp)-watch [![Build Status: Linux][travis-image]][travis-url] [![Build Status: Windows][appveyor-image]][appveyor-url] [![Dependency Status][depstat-image]][depstat-url]
+
 File watcher that uses super-fast [chokidar](https://github.com/paulmillr/chokidar) and emits vinyl objects.
 
 ## Installation
