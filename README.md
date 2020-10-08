@@ -1,12 +1,6 @@
 # [gulp](https://github.com/gulpjs/gulp)-watch [![Build Status](https://travis-ci.com/ZyC0R3/gulp-watch.svg?branch=master)](https://travis-ci.com/ZyC0R3/gulp-watch)
 File watcher that uses super-fast [chokidar](https://github.com/paulmillr/chokidar) and emits vinyl objects.
 
-## Installation
-
-```
-npm install --save-dev gulp-watch
-```
-
 ## Usage
 
 ```js
