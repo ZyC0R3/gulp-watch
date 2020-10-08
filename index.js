@@ -101,7 +101,7 @@ function watch(globs, opts, cb) {
 
 		var glob;
 		var currentFilepath = filepath;
-		while (!(glob = globs[anymatch(globs, currentFilepath, true)]) && currentFilepath !== (currentFilepath = path.dirname(currentFilepath))) {} // eslint-disable-line no-empty-blocks/no-empty-blocks
+		while (!(glob = globs[anymatch(globs, currentFilepath, true)]) && currentFilepath !== (currentFilepath = path.dirname(currentFilepath))) {}
 
 		if (!glob) {
 			fancyLog.info(
