@@ -1,5 +1,5 @@
 {
-  "name": "gulp-watch",
+  "name": "rita-gulp-watch",
   "version": "5.1.4",
   "description": "Watch, that actually is an endless stream",
   "main": "index.js",
@@ -52,5 +52,10 @@
     "vinyl": "^2.2.1",
     "vinyl-file": "^3.0.0"
   },
-  "engine": "node >= 10"
+  "engine": "node >= 10",
+  "homepage": "https://github.com/floatdrop/gulp-watch#readme",
+  "directories": {
+    "doc": "docs",
+    "test": "test"
+  }
 }
